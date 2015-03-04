@@ -53,6 +53,10 @@ LIBCXXABI_RTTI_FLAG := -frtti
 LIBCXXABI_CPPFLAGS := \
     -std=c++11 \
     -fexceptions \
+    -Wall \
+    -Wextra \
+    -Wno-unused-function \
+    -Werror \
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libunwind_llvm
@@ -107,8 +111,6 @@ LOCAL_SRC_FILES += $(LLVM_UNWIND_SRC_FILES) src/Unwind/Unwind_AppleExtras.cpp
 LOCAL_ASFLAGS += -integrated-as
 LOCAL_CFLAGS += -integrated-as
 LOCAL_CPPFLAGS += -integrated-as
-else
-LOCAL_WHOLE_STATIC_LIBRARIES := libunwindbacktrace
 endif
 
 LOCAL_RTTI_FLAG := $(LIBCXXABI_RTTI_FLAG)
