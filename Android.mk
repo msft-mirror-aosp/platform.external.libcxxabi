@@ -27,6 +27,7 @@ LIBCXXABI_SRC_FILES := \
     src/cxa_handlers.cpp \
     src/cxa_new_delete.cpp \
     src/cxa_personality.cpp \
+    src/cxa_thread_atexit.cpp \
     src/cxa_unexpected.cpp \
     src/cxa_vector.cpp \
     src/cxa_virtual.cpp \
@@ -75,15 +76,15 @@ LOCAL_MODULE := libc++abi
 LOCAL_CLANG := true
 LOCAL_SRC_FILES := $(LIBCXXABI_SRC_FILES)
 LOCAL_C_INCLUDES := $(LIBCXXABI_INCLUDES)
-LOCAL_CPPFLAGS := $(LIBCXXABI_CPPFLAGS)
+LOCAL_CPPFLAGS := $(LIBCXXABI_CPPFLAGS) -DHAVE___CXA_THREAD_ATEXIT_IMPL
+LOCAL_CPPFLAGS_arm := -DLIBCXXABI_USE_LLVM_UNWINDER=1
+LOCAL_CPPFLAGS_arm64 := -DLIBCXXABI_USE_LLVM_UNWINDER=0
+LOCAL_CPPFLAGS_mips := -DLIBCXXABI_USE_LLVM_UNWINDER=0
+LOCAL_CPPFLAGS_mips64 := -DLIBCXXABI_USE_LLVM_UNWINDER=0
+LOCAL_CPPFLAGS_x86 := -DLIBCXXABI_USE_LLVM_UNWINDER=0
+LOCAL_CPPFLAGS_x86_64 := -DLIBCXXABI_USE_LLVM_UNWINDER=0
 LOCAL_CXX_STL := none
 LOCAL_RTTI_FLAG := $(LIBCXXABI_RTTI_FLAG)
-LOCAL_WHOLE_STATIC_LIBRARIES_arm := libunwind_llvm
-LOCAL_WHOLE_STATIC_LIBRARIES_arm64 := libunwindbacktrace
-LOCAL_WHOLE_STATIC_LIBRARIES_mips := libunwindbacktrace
-LOCAL_WHOLE_STATIC_LIBRARIES_mips64 := libunwindbacktrace
-LOCAL_WHOLE_STATIC_LIBRARIES_x86 := libunwindbacktrace
-LOCAL_WHOLE_STATIC_LIBRARIES_x86_64 := libunwindbacktrace
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
 # src/Unwind/UnwindRegistersSave.S does not compile.
 LOCAL_CLANG_ASFLAGS_arm += -no-integrated-as
