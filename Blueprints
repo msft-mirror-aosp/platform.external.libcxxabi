@@ -25,6 +25,7 @@ LIBCXXABI_SRC_FILES = [
     "src/cxa_handlers.cpp",
     "src/cxa_new_delete.cpp",
     "src/cxa_personality.cpp",
+    "src/cxa_thread_atexit.cpp",
     "src/cxa_unexpected.cpp",
     "src/cxa_vector.cpp",
     "src/cxa_virtual.cpp",
@@ -91,8 +92,6 @@ cc_library_static {
     rtti: true,
     arch: {
         arm: {
-            whole_static_libs: ["libunwind_llvm"],
-
             // src/Unwind/UnwindRegistersSave.S does not compile.
             // When src/cxa_exception.cpp is compiled with Clang assembler
             // __cxa_end_cleanup_impl, although marked as used, was discarded
@@ -103,24 +102,28 @@ cc_library_static {
             // See also http://llvm.org/bugs/show_bug.cgi?id=21292.
             clang_asflags: ["-no-integrated-as"],
             clang_cflags: ["-no-integrated-as"],
+            cppflags: ["-DLIBCXXABI_USE_LLVM_UNWINDER=1"],
         },
         arm64: {
-            whole_static_libs: ["libunwindbacktrace"],
+            cppflags: ["-DLIBCXXABI_USE_LLVM_UNWINDER=0"],
         },
         mips: {
-            whole_static_libs: ["libunwindbacktrace"],
+            cppflags: ["-DLIBCXXABI_USE_LLVM_UNWINDER=0"],
         },
         mips64: {
-            whole_static_libs: ["libunwindbacktrace"],
+            cppflags: ["-DLIBCXXABI_USE_LLVM_UNWINDER=0"],
         },
         x86: {
-            whole_static_libs: ["libunwindbacktrace"],
+            cppflags: ["-DLIBCXXABI_USE_LLVM_UNWINDER=0"],
         },
         x86_64: {
-            whole_static_libs: ["libunwindbacktrace"],
+            cppflags: ["-DLIBCXXABI_USE_LLVM_UNWINDER=0"],
         },
     },
     target: {
+        android: {
+            cppflags: ["-DHAVE___CXA_THREAD_ATEXIT_IMPL"],
+        },
         darwin: {
             srcs: LLVM_UNWIND_SRC_FILES + ["src/Unwind/Unwind_AppleExtras.cpp"],
             // libcxxabi really doesn't like the non-LLVM assembler on Darwin
