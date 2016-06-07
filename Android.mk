@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 LOCAL_PATH := $(call my-dir)
 
-LIBCXXABI_SRC_FILES := \
+libcxxabi_src_files := \
     src/abort_message.cpp \
     src/cxa_aux_runtime.cpp \
     src/cxa_default_handlers.cpp \
@@ -34,57 +34,56 @@ LIBCXXABI_SRC_FILES := \
     src/exception.cpp \
     src/private_typeinfo.cpp \
     src/stdexcept.cpp \
-    src/typeinfo.cpp \
+    src/typeinfo.cpp
 
-LIBCXXABI_INCLUDES := \
+libcxxabi_includes := \
     $(LOCAL_PATH)/include \
-    external/libcxx/include \
+    $(LOCAL_PATH)/../libunwind_llvm/include \
+    $(LOCAL_PATH)/../libcxx/include \
+    $(LOCAL_PATH)/../../ndk/sources/android/support/include
 
-LIBCXXABI_RTTI_FLAG := -frtti
-LIBCXXABI_CPPFLAGS := \
-    -std=c++14 \
-    -fexceptions \
-    -Wall \
-    -Wextra \
-    -Wno-unused-function \
-    -Werror \
+libcxxabi_cflags := -D__STDC_FORMAT_MACROS
+libcxxabi_cppflags := -std=c++11
 
-include $(CLEAR_VARS)
-LOCAL_MODULE := libc++abi
-LOCAL_CLANG := true
-LOCAL_SRC_FILES := $(LIBCXXABI_SRC_FILES)
-LOCAL_C_INCLUDES := $(LIBCXXABI_INCLUDES)
-LOCAL_C_INCLUDES_arm := external/libunwind_llvm/include
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-LOCAL_CPPFLAGS := $(LIBCXXABI_CPPFLAGS) -DHAVE___CXA_THREAD_ATEXIT_IMPL
-LOCAL_CPPFLAGS_arm := -DLIBCXXABI_USE_LLVM_UNWINDER=1
-LOCAL_CPPFLAGS_arm64 := -DLIBCXXABI_USE_LLVM_UNWINDER=0
-LOCAL_CPPFLAGS_mips := -DLIBCXXABI_USE_LLVM_UNWINDER=0
-LOCAL_CPPFLAGS_mips64 := -DLIBCXXABI_USE_LLVM_UNWINDER=0
-LOCAL_CPPFLAGS_x86 := -DLIBCXXABI_USE_LLVM_UNWINDER=0
-LOCAL_CPPFLAGS_x86_64 := -DLIBCXXABI_USE_LLVM_UNWINDER=0
-LOCAL_RTTI_FLAG := $(LIBCXXABI_RTTI_FLAG)
-LOCAL_CXX_STL := none
-LOCAL_SANITIZE := never
-include $(BUILD_STATIC_LIBRARY)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libc++abi
-LOCAL_CLANG := true
-LOCAL_SRC_FILES := $(LIBCXXABI_SRC_FILES)
-LOCAL_C_INCLUDES := $(LIBCXXABI_INCLUDES)
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-LOCAL_CPPFLAGS := $(LIBCXXABI_CPPFLAGS)
-LOCAL_RTTI_FLAG := $(LIBCXXABI_RTTI_FLAG)
-LOCAL_MULTILIB := both
-LOCAL_CXX_STL := none
-LOCAL_SANITIZE := never
-
-ifeq ($(HOST_OS),darwin)
-# libcxxabi really doesn't like the non-LLVM assembler on Darwin
-LOCAL_ASFLAGS += -integrated-as
-LOCAL_CFLAGS += -integrated-as
-LOCAL_CPPFLAGS += -integrated-as
+ifneq (,$(filter armeabi%,$(TARGET_ARCH_ABI)))
+    use_llvm_unwinder := true
+    libcxxabi_cppflags += -DLIBCXXABI_USE_LLVM_UNWINDER=1
+else
+    use_llvm_unwinder := false
+    libcxxabi_cppflags += -DLIBCXXABI_USE_LLVM_UNWINDER=0
 endif
 
-include $(BUILD_HOST_STATIC_LIBRARY)
+ifneq ($(LIBCXX_FORCE_REBUILD),true) # Using prebuilt
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libc++abi
+LOCAL_SRC_FILES := ../llvm-libc++/libs/$(TARGET_ARCH_ABI)/$(LOCAL_MODULE)$(TARGET_LIB_EXTENSION)
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
+include $(PREBUILT_STATIC_LIBRARY)
+
+else # Building
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libc++abi
+LOCAL_SRC_FILES := $(libcxxabi_src_files)
+LOCAL_C_INCLUDES := $(libcxxabi_includes)
+LOCAL_CPPFLAGS := $(libcxxabi_cppflags)
+LOCAL_CPP_FEATURES := rtti exceptions
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
+LOCAL_STATIC_LIBRARIES := android_support
+
+# Unlike the platform build, ndk-build will actually perform dependency checking
+# on static libraries and topologically sort them to determine link order.
+# Though there is no link step, without this we may link libunwind before
+# libc++abi, which won't succeed.
+ifeq ($(use_llvm_unwinder),true)
+    LOCAL_STATIC_LIBRARIES += libunwind
+endif
+include $(BUILD_STATIC_LIBRARY)
+
+$(call import-add-path, $(LOCAL_PATH)/../..)
+$(call import-module, external/libunwind_llvm)
+
+endif # Prebuilt/building
+
+$(call import-module, android/support)
