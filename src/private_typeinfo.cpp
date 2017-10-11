@@ -10,18 +10,38 @@
 #include "private_typeinfo.h"
 
 // The flag _LIBCXX_DYNAMIC_FALLBACK is used to make dynamic_cast more
-// forgiving when multiple type_infos exist for a single type. This happens if
-// the libraries are mistakenly built with the type_infos having hidden
-// visibility, but also occurs when the libraries are loaded with dlopen.
-//
+// forgiving when type_info's mistakenly have hidden visibility and thus
+// multiple type_infos can exist for a single type.
+// 
 // When _LIBCXX_DYNAMIC_FALLBACK is defined, and only in the case where
 // there is a detected inconsistency in the type_info hierarchy during a
 // dynamic_cast, then the equality operation will fall back to using strcmp
 // on type_info names to determine type_info equality.
-//
+// 
+// This change happens *only* under dynamic_cast, and only when
+// dynamic_cast is faced with the choice:  abort, or possibly give back the
+// wrong answer.  If when the dynamic_cast is done with this fallback
+// algorithm and an inconsistency is still detected, dynamic_cast will call
+// abort with an appropriate message.
+// 
+// The current implementation of _LIBCXX_DYNAMIC_FALLBACK requires a
+// printf-like function called syslog:
+// 
+//     void syslog(int facility_priority, const char* format, ...);
+// 
+// If you want this functionality but your platform doesn't have syslog,
+// just implement it in terms of fprintf(stderr, ...).
+// 
 // _LIBCXX_DYNAMIC_FALLBACK is currently off by default.
 
+
 #include <string.h>
+
+
+#ifdef _LIBCXX_DYNAMIC_FALLBACK
+#include "abort_message.h"
+#include <sys/syslog.h>
+#endif
 
 // On Windows, typeids are different between DLLs and EXEs, so comparing
 // type_info* will work for typeids from the same compiled file but fail
@@ -627,11 +647,11 @@ __dynamic_cast(const void *static_ptr, const __class_type_info *static_type,
         //   find (static_ptr, static_type), either on a public or private path
         if (info.path_dst_ptr_to_static_ptr == unknown)
         {
-            // We get here only if there is some kind of visibility problem in
-            // client code. Possibly because the binaries were built
-            // incorrectly, but possibly because the library was loaded with
-            // dlopen.
-            //
+            // We get here only if there is some kind of visibility problem
+            //   in client code.
+            syslog(LOG_ERR, "dynamic_cast error 1: Both of the following type_info's "
+                    "should have public visibility.  At least one of them is hidden. %s" 
+                    ", %s.\n", static_type->name(), dynamic_type->name());
             // Redo the search comparing type_info's using strcmp
             info = {dst_type, static_ptr, static_type, src2dst_offset, 0};
             info.number_of_dst_type = 1;
@@ -652,6 +672,10 @@ __dynamic_cast(const void *static_ptr, const __class_type_info *static_type,
         if (info.path_dst_ptr_to_static_ptr == unknown &&
             info.path_dynamic_ptr_to_static_ptr == unknown)
         {
+            syslog(LOG_ERR, "dynamic_cast error 2: One or more of the following type_info's "
+                            " has hidden visibility.  They should all have public visibility.  "
+                            " %s, %s, %s.\n", static_type->name(), dynamic_type->name(),
+                    dst_type->name());
             // Redo the search comparing type_info's using strcmp
             info = {dst_type, static_ptr, static_type, src2dst_offset, 0};
             dynamic_type->search_below_dst(&info, dynamic_ptr, public_path, true);
