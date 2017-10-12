@@ -46,16 +46,6 @@ libcxxabi_includes := \
 libcxxabi_cflags := -D__STDC_FORMAT_MACROS
 libcxxabi_cppflags := -std=c++11 -Wno-unknown-attributes
 
-# Enabling _LIBCXX_DYNAMIC_FALLBACK allows type_info objects to be equal if
-# their strings are equal, not just their addresses. This is very common on
-# Android where libraries are loaded as RTLD_LOCAL via System.loadLibrary.
-#
-# This behavior matches libsupc++, which always does a string compare to
-# preserve compatibility for plugin architectures that behave similarly.
-#
-# https://github.com/android-ndk/ndk/issues/533
-libcxxabi_cppflags += -D_LIBCXX_DYNAMIC_FALLBACK
-
 ifneq (,$(filter armeabi%,$(TARGET_ARCH_ABI)))
     use_llvm_unwinder := true
     libcxxabi_cppflags += -DLIBCXXABI_USE_LLVM_UNWINDER=1
