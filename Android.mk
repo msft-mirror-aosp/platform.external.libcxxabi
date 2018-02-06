@@ -66,7 +66,7 @@ LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
 # Though there is no link step, without this we may link libunwind before
 # libc++abi, which won't succeed.
 ifeq ($(use_llvm_unwinder),true)
-    LOCAL_STATIC_LIBRARIES += libunwind
+    LOCAL_STATIC_LIBRARIES := libunwind
     LOCAL_EXPORT_STATIC_LIBRARIES := libunwind
 endif
 include $(PREBUILT_STATIC_LIBRARY)
@@ -80,14 +80,13 @@ LOCAL_C_INCLUDES := $(libcxxabi_includes)
 LOCAL_CPPFLAGS := $(libcxxabi_cppflags)
 LOCAL_CPP_FEATURES := rtti exceptions
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_STATIC_LIBRARIES := android_support
 
 # Unlike the platform build, ndk-build will actually perform dependency checking
 # on static libraries and topologically sort them to determine link order.
 # Though there is no link step, without this we may link libunwind before
 # libc++abi, which won't succeed.
 ifeq ($(use_llvm_unwinder),true)
-    LOCAL_STATIC_LIBRARIES += libunwind
+    LOCAL_STATIC_LIBRARIES := libunwind
     LOCAL_EXPORT_STATIC_LIBRARIES := libunwind
 endif
 include $(BUILD_STATIC_LIBRARY)
