@@ -80,7 +80,13 @@ LOCAL_C_INCLUDES := $(libcxxabi_includes)
 LOCAL_CPPFLAGS := $(libcxxabi_cppflags)
 LOCAL_CPP_FEATURES := rtti exceptions
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_STATIC_LIBRARIES := android_support
+
+ifeq ($(NDK_PLATFORM_NEEDS_ANDROID_SUPPORT),true)
+    # This doesn't affect the prebuilt itself since this is a prebuilt library,
+    # but the build system needs to know about the dependency so we can sort the
+    # exported includes properly.
+    LOCAL_STATIC_LIBRARIES += libandroid_support
+endif
 
 # Unlike the platform build, ndk-build will actually perform dependency checking
 # on static libraries and topologically sort them to determine link order.
