@@ -41,7 +41,6 @@ libcxxabi_includes := \
     $(LOCAL_PATH)/include \
     $(LOCAL_PATH)/../libunwind_llvm/include \
     $(LOCAL_PATH)/../libcxx/include \
-    $(LOCAL_PATH)/../../ndk/sources/android/support/include
 
 libcxxabi_cflags := -D__STDC_FORMAT_MACROS
 libcxxabi_cppflags := -std=c++11 -Wno-unknown-attributes
