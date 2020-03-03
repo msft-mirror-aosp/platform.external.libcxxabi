@@ -39,7 +39,7 @@ libcxxabi_src_files := \
 
 libcxxabi_includes := \
     $(LOCAL_PATH)/include \
-    $(LOCAL_PATH)/../libunwind_llvm/include \
+    $(LOCAL_PATH)/../../toolchain/llvm-project/libunwind/include \
     $(LOCAL_PATH)/../libcxx/include \
 
 libcxxabi_cflags := -D__STDC_FORMAT_MACROS
@@ -98,7 +98,7 @@ endif
 include $(BUILD_STATIC_LIBRARY)
 
 $(call import-add-path, $(LOCAL_PATH)/../..)
-$(call import-module, external/libunwind_llvm)
+$(call import-module, toolchain/llvm-project/libunwind)
 
 endif # Prebuilt/building
 
