@@ -17,6 +17,7 @@
 cc_defaults {
     name: "libc++abi_defaults",
     vendor_available: true,
+    ramdisk_available: true,
     recovery_available: true,
     native_bridge_supported: true,
     include_dirs: ["external/libcxx/include"],
@@ -79,12 +80,6 @@ cc_library_static {
             cppflags: ["-DLIBCXXABI_USE_LLVM_UNWINDER=1"],
         },
         arm64: {
-            cppflags: ["-DLIBCXXABI_USE_LLVM_UNWINDER=0"],
-        },
-        mips: {
-            cppflags: ["-DLIBCXXABI_USE_LLVM_UNWINDER=0"],
-        },
-        mips64: {
             cppflags: ["-DLIBCXXABI_USE_LLVM_UNWINDER=0"],
         },
         x86: {
